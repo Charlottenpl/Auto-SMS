@@ -2,6 +2,7 @@ package com.sky.autosms
 
 import android.Manifest
 import android.os.Bundle
+import android.provider.Telephony
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -9,9 +10,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,6 +43,10 @@ import com.sky.autosms.data.model.SMS
 import com.sky.autosms.ui.theme.AutoSmsTheme
 import com.sky.autosms.ui.theme.view_models.SMSViewModel
 import com.sky.autosms.utils.PermissionUtil
+import com.sky.autosms.utils.convertTimestampToDateString
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     private lateinit var launcher: ActivityResultLauncher<String>
@@ -168,6 +175,8 @@ fun SmsList(smsList: List<SMS>, modifier: Modifier) {
 
 @Composable
 fun SmsItem(smsData: SMS) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -177,9 +186,32 @@ fun SmsItem(smsData: SMS) {
             modifier = Modifier
                 .padding(16.dp)
         ) {
-            Text("From: ${smsData.sender}", fontWeight = FontWeight.Bold)
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+            ) {
+                Text("From: ${smsData.sender}", fontWeight = FontWeight.Bold)
+                Text("Date: ${convertTimestampToDateString(smsData.date)}")
+            }
+
             Spacer(modifier = Modifier.height(4.dp))
-            Text(smsData.body)
+
+            if (expanded) {
+                Text("ID: ${smsData.id}")
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Type: ${if (smsData.type == Telephony.Sms.MESSAGE_TYPE_SENT) "Sent" else "Received"}")
+                Spacer(modifier = Modifier.height(4.dp))
+//                Text("Read: ${if (smsData.read == 1) "Yes" else "No"}")
+//                Spacer(modifier = Modifier.height(4.dp))
+//                Text("Seen: ${if (smsData.seen == 1) "Yes" else "No"}")
+//                Spacer(modifier = Modifier.height(4.dp))
+//                Text("Status: ${smsData.status}")
+//                Spacer(modifier = Modifier.height(4.dp))
+                Text("Body: ${smsData.body}")
+            }
         }
     }
 }
@@ -197,10 +229,6 @@ fun GreetingPreview() {
         ) {
 
             SmsList(smsList = arrayListOf(
-                SMS(sender = "xxx", body = "ahhhhhhh"),
-                SMS(sender = "xxx", body = "ahhhhhhh"),
-                SMS(sender = "xxx", body = "ahhhhhhh"),
-                SMS(sender = "xxx", body = "ahhhhhhh")
             ),
                 modifier = Modifier
                     .fillMaxWidth() // 占据整个宽度
